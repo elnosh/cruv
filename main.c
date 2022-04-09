@@ -3,6 +3,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#define PB "||||||||||||||||||||||||||||||||||||||||||||||||||"
+#define PBWIDTH 50
+
+void printPercentUsed(double);
 char *getSubstring(char *, int, int);
 
 int main(int argc, char *argv[]) {
@@ -20,8 +24,10 @@ int main(int argc, char *argv[]) {
 	int mem_free, total, used;
 	while ((nread = getline(&line, &len, fp)) != EOF) {
 		char *resource;
+
 		if (strstr(line, "MemAvailable") != NULL || strstr(line, "MemTotal") != NULL) {
 			printf("%s", line);
+
 			int start = 1000, end = 1000, digidx = 1000;
 			for (int i = 0; i < strlen(line); i++) {
 				if (isalpha(line[i]) && start > i) {
@@ -46,10 +52,13 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-	used = total - mem_free;
-	double prct_used = ((double) used / (double) total) * 100;
 
-	printf("memory used: %0.2f%%\n", prct_used);
+	used = total - mem_free;
+	double pct_used = ((double) used / (double) total);
+
+	printf("\nMemory used: %0.2f%%\n", pct_used * 100);
+
+	printPercentUsed(pct_used);
 
 	free(line);
 	fclose(fp);
@@ -57,7 +66,15 @@ int main(int argc, char *argv[]) {
 	exit(EXIT_SUCCESS);
 }
 
-// function to extract substring from string with start and end idx - return NULL if err
+// pct bar
+void printPercentUsed(double percentage) {
+	int lpad = (int) (percentage * PBWIDTH); // pbwidth 50
+	int rpad = PBWIDTH - lpad;
+	printf("\r%0.2f%% [%.*s%*s]\n", percentage * 100, lpad, PB, rpad, ""); // %.*s - prints lpad amount of PB (||) // *s - printfs rpad "" spaces
+	fflush(stdout);
+}
+
+// function to extract substring from str with start and end idx - return NULL if err
 char *getSubstring(char *str, int from, int to) {
 	int len = to - from;
 
