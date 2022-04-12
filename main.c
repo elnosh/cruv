@@ -10,19 +10,21 @@ void printPercentUsed(double);
 char *getSubstring(char *, int, int);
 
 int main(int argc, char *argv[]) {
-	FILE *fp;
+
+	// mem
+	FILE *mem_fp;
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t nread;
 
-	fp = fopen("/proc/meminfo", "r");
-	if (fp == NULL) {
-		perror("Error opening file");
+	mem_fp = fopen("/proc/meminfo", "r");
+	if (mem_fp == NULL) {
+		perror("Error opening /proc/meminfo");
 		exit(EXIT_FAILURE);
 	}
 	
 	int mem_free, total, used;
-	while ((nread = getline(&line, &len, fp)) != EOF) {
+	while ((nread = getline(&line, &len, mem_fp)) != EOF) {
 		char *resource;
 
 		if (strstr(line, "MemAvailable") != NULL || strstr(line, "MemTotal") != NULL) {
@@ -60,8 +62,42 @@ int main(int argc, char *argv[]) {
 
 	printPercentUsed(pct_used);
 
+	// cpu
+	FILE *cpu_fp;
+	char *fline = NULL;
+	len = 0;
+
+	cpu_fp = fopen("/proc/stat", "r");
+	if (cpu_fp == NULL) {
+		perror("error opening /proc/stat");
+		exit(EXIT_FAILURE);
+	}
+
+	//int free_cpu, tot_cpu, used_cpu;
+	while ((nread = getline(&fline, &len, cpu_fp)) != EOF) {
+		int user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+		double idle_time;
+
+		if (strstr(fline, "cpu") != NULL) {
+			char cpu[5];
+			cpu[4] = '\0';
+			strncpy(cpu, &fline[0], 4);
+			
+			if (strcmp(cpu, "cpu ") == 0) {
+				sscanf(fline, "cpu  %d %d %d %d %d %d %d %d %d %d", &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal, &guest, &guest_nice); 
+				//printf("printing values: %d %d %d %d %d %d %d %d %d %d", user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice); 
+				double num = (double) idle * 100, den = user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice;
+				idle_time = num / den;
+				double cpu_usage = 100 - idle_time;
+				printf("\nCPU usage: %0.2f\n", cpu_usage);
+				printPercentUsed(cpu_usage / 100);
+			}
+		}
+	}
+
+
 	free(line);
-	fclose(fp);
+	fclose(mem_fp);
 	
 	exit(EXIT_SUCCESS);
 }
