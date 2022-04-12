@@ -8,9 +8,17 @@
 
 void printPercentUsed(double);
 char *getSubstring(char *, int, int);
+void getMemoryUsg();
+void getCPU();
 
 int main(int argc, char *argv[]) {
+	getMemoryUsg();
+	getCPU();
+	
+	exit(EXIT_SUCCESS);
+}
 
+void getMemoryUsg() {
 	// mem
 	FILE *mem_fp;
 	char *line = NULL;
@@ -62,10 +70,17 @@ int main(int argc, char *argv[]) {
 
 	printPercentUsed(pct_used);
 
+	free(line);
+	fclose(mem_fp);
+}
+
+// TODO: fix - very inaccurate
+void getCPU() {
 	// cpu
 	FILE *cpu_fp;
 	char *fline = NULL;
-	len = 0;
+	size_t len = 0;
+	ssize_t nread;
 
 	cpu_fp = fopen("/proc/stat", "r");
 	if (cpu_fp == NULL) {
@@ -94,12 +109,8 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
-
-
-	free(line);
-	fclose(mem_fp);
-	
-	exit(EXIT_SUCCESS);
+	free(fline);
+	fclose(cpu_fp);
 }
 
 // pct bar
